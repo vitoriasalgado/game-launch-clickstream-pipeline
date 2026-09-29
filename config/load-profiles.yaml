@@ -1,0 +1,7 @@
+# Perfis sintéticos usados nos experimentos locais.
+normal:
+  target_events_per_second: 500
+campaign_trailer:
+  target_events_per_second: 5000
+viral_peak:
+  target_events_per_second: 20000

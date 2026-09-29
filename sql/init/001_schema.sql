@@ -1,0 +1,2 @@
+-- Esquema reservado para as agregações dos dois consumer groups.
+-- A implementação das tabelas será adicionada na etapa de persistência.

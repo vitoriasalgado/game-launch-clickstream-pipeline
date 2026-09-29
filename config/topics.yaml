@@ -1,0 +1,6 @@
+topics:
+  - name: game-clickstream-events
+    partitions: 6
+    replication_factor: 1
+    retention_ms: 86400000
+    description: Eventos sintéticos de clickstream, particionados por session_id.
