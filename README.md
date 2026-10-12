@@ -28,6 +28,24 @@ Gerador de eventos sintéticos
 | Campanha/trailer | 5.000 eventos/s |
 | Pico viral | 20.000 eventos/s |
 
+## Como iniciar a infraestrutura local
+
+Com Docker e Docker Compose disponíveis, execute na raiz do repositório:
+
+```bash
+cp -n .env.example .env
+docker compose up -d kafka postgres kafka-ui
+docker compose ps
+```
+
+O `cp -n` cria o `.env` apenas se ele ainda não existir, sem sobrescrever sua configuração local. Esse arquivo não deve ser versionado. O `docker compose ps` deve mostrar os três serviços em execução. A interface Kafka UI fica em <http://localhost:8081>.
+
+Para parar os serviços sem remover os volumes de dados:
+
+```bash
+docker compose down
+```
+
 ## Próximas etapas
 
 1. Subir Kafka, PostgreSQL e ferramentas de observabilidade com Docker Compose.
