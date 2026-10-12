@@ -6,6 +6,8 @@ Uma campanha promocional de um lançamento de grande alcance pode concentrar ace
 
 O caso não usa dados reais: eventos, volumes, campanhas e resultados são sintéticos. O objetivo é demonstrar engenharia de dados e planejamento de capacidade, não projetar demanda oficial de GTA VI ou da Rockstar Games.
 
+GTA VI serve como inspiração para uma campanha fictícia de pré-venda. O estudo é reproduzível antes ou depois do lançamento do jogo, sem depender de sua data oficial ou da execução de uma campanha real. A validade dos resultados se limita às condições e aos recursos registrados em cada experimento local.
+
 ## 2. Problema
 
 Quando produtores publicam mais eventos do que consumidores conseguem processar, um sistema precisa absorver a diferença sem perder eventos e permitir que o processamento se recupere depois. Também é preciso enxergar o backlog, o tempo em fila e o efeito de aumentar a capacidade de consumo.

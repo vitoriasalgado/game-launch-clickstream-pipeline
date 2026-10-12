@@ -1,12 +1,14 @@
 # game-launch-clickstream-pipeline
 
-Pipeline de clickstream sintético para simular e analisar picos de tráfego durante uma campanha fictícia de pré-venda de GTA VI, usando Kafka para processamento escalável de eventos, monitoramento de consumer lag e planejamento de capacidade.
+Estudo reproduzível de planejamento de capacidade com um pipeline de clickstream inteiramente sintético, inspirado em uma campanha fictícia de pré-venda de GTA VI. Usa Kafka para simular e analisar picos de tráfego, monitorar consumer lag e experimentar a escala de consumidores.
 
 > **Nota de transparência:** este é um projeto de simulação. Todos os eventos, volumes, campanhas e métricas são sintéticos; não representam dados, previsões ou sistemas oficiais da Rockstar Games.
 
 ## Objetivo
 
 Demonstrar, em um ambiente local reproduzível, como Kafka absorve rajadas de eventos quando a produção supera a capacidade de consumo. O experimento mede throughput, consumer lag, latência de fila, recuperação de backlog e os limites de paralelismo impostos pelo número de partitions.
+
+O cenário pode ser executado antes ou depois do lançamento do jogo: os experimentos independem do calendário oficial e não acompanham uma campanha real. Seu valor está na reprodução dos testes e na análise das medições locais.
 
 ## Arquitetura planejada
 

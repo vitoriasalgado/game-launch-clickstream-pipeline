@@ -11,7 +11,9 @@ Dois consumer groups leem o mesmo tópico de forma independente:
 - `campaign-metrics`: produz agregações por página, campanha, tipo de evento e janela de tempo.
 - `active-users`: acompanha sessões ou usuários ativos em janelas recentes.
 
-Cada group pode processar, no máximo, uma partition por consumer. Com seis partitions, acrescentar um sétimo consumer ao mesmo group não aumenta seu paralelismo.
+Dentro de um consumer group, cada partition é atribuída a apenas um consumer por vez, mas um consumer pode receber várias partitions. Por exemplo, seis partitions podem ser distribuídas entre três consumers, com duas para cada um em uma atribuição equilibrada. Outro group recebe sua própria atribuição e lê essas mesmas partitions de forma independente.
+
+Com seis partitions nesse tópico, no máximo seis consumers do mesmo group podem ter partitions atribuídas simultaneamente. Ao adicionar um sétimo, pelo menos um fica sem partition desse tópico; o limite de paralelismo do group não aumenta. Aumentar consumers até esse limite também não garante ganho proporcional de throughput: os experimentos devem medir o efeito da distribuição dos eventos e dos gargalos locais.
 
 PostgreSQL guarda agregados e resultados operacionais dos experimentos. Kafka UI, Prometheus, Grafana e cAdvisor serão usados para observar o estado do pipeline e dos containers.
 
