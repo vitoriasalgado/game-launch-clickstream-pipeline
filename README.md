@@ -48,6 +48,44 @@ Para parar os serviços sem remover os volumes de dados:
 docker compose down
 ```
 
+## Criar o tópico Kafka
+
+Com o Kafka iniciado conforme a seção anterior, execute os comandos abaixo na raiz do repositório. O script usa caminhos relativos a essa pasta.
+
+Use Python 3.14. Se ainda não tiver um ambiente virtual, crie-o para manter as dependências do projeto separadas das demais instalações Python:
+
+```bash
+python3 -m venv .venv
+```
+
+Ative o ambiente no terminal e instale as dependências, incluindo as ferramentas de desenvolvimento:
+
+```bash
+source .venv/bin/activate
+python -m pip install ".[dev]"
+```
+
+Defina o endereço do Kafka para o programa executado no Mac:
+
+```bash
+export KAFKA_BOOTSTRAP_SERVERS=localhost:9092
+```
+
+Essa variável vale para a sessão atual do terminal. Em um novo terminal, defina-a novamente antes de executar o script. O programa não carrega o arquivo `.env` automaticamente.
+
+No mesmo terminal, execute o script de administração:
+
+```bash
+python src/admin/create_topic.py
+```
+
+O script consulta o Kafka e lê o primeiro tópico definido em `config/topics.yaml`. Na configuração padrão, ele cria `game-clickstream-events` com seis partitions, fator de replicação 1 e retenção de 86.400.000 milissegundos (um dia).
+
+- Se o tópico não existir, o script solicita a criação e aguarda a confirmação do Kafka antes de mostrar `Tópico criado com sucesso.`
+- Se o tópico já existir, mostra `O tópico já existe.`
+
+O script não atualiza nem compara as configurações de um tópico existente. Portanto, mudar partitions ou retenção no YAML e executar novamente não aplica essas mudanças ao Kafka. Confira as configurações no Kafka UI em <http://localhost:8081>.
+
 ## Próximas etapas
 
 1. Subir Kafka, PostgreSQL e ferramentas de observabilidade com Docker Compose.
