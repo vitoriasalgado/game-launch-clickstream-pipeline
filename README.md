@@ -86,11 +86,58 @@ O script consulta o Kafka e lê o primeiro tópico definido em `config/topics.ya
 
 O script não atualiza nem compara as configurações de um tópico existente. Portanto, mudar partitions ou retenção no YAML e executar novamente não aplica essas mudanças ao Kafka. Confira as configurações no Kafka UI em <http://localhost:8081>.
 
+## Publicar um evento de exemplo
+
+Com o Kafka rodando, o tópico criado e o ambiente virtual ativo, execute na raiz do repositório. Defina o endereço do broker na mesma sessão do terminal:
+
+```bash
+export KAFKA_BOOTSTRAP_SERVERS=localhost:9092
+```
+
+Execute o programa de publicação:
+
+```bash
+python src/producer/publish_example.py
+```
+
+Cada execução gera um evento sintético `game_page_view` com novo UUID e horário UTC, converte os dados para JSON e publica uma mensagem no primeiro tópico de `config/topics.yaml`. A chave Kafka recebe o mesmo valor do campo `session_id`: `session_exemplo_01` neste exemplo. O contrato está em [docs/event-contract.md](docs/event-contract.md).
+
+O programa mostra `Evento entregue ao Kafka.` quando o callback recebe a confirmação de sucesso. Depois, exibe a quantidade de mensagens ainda pendentes ao terminar a espera de até dez segundos. O valor `0` significa que não restaram mensagens pendentes; sozinho, ele não confirma sucesso, pois uma falha de entrega também pode concluir a operação. Confira a resposta do callback.
+
+Para inspecionar a publicação, abra <http://localhost:8081>, selecione `game-clickstream-events` e entre em **Messages**. Confira a chave, o JSON, a partition e o offset. Execute o programa novamente e atualize a lista para comparar dois eventos da mesma sessão.
+
+Na validação manual de 27/10/2026, foram observados dois eventos com UUIDs diferentes e a seguinte distribuição:
+
+| Evento | Chave Kafka | Partition | Offset |
+| --- | --- | ---: | ---: |
+| Primeiro | `session_exemplo_01` | 0 | 0 |
+| Segundo | `session_exemplo_01` | 0 | 1 |
+
+Essa observação confirma que, nessa execução, a mesma chave encaminhou os dois eventos à mesma partition, com offsets crescentes. Os números acima são evidência desse teste local, não valores que toda execução deva reproduzir. Outras sessões podem ir para outras partitions; a escolha também depende da regra de particionamento e da quantidade de partitions.
+
+## Verificações locais
+
+Com o ambiente virtual ativo, os comandos abaixo verificam problemas no código, conferem a formatação e executam os testes, respectivamente:
+
+```bash
+python -m ruff check src tests
+python -m ruff format --check src tests
+python -m pytest tests -v
+```
+
+Os testes automatizados atuais verificam a configuração de partitions e os campos do evento de exemplo, seu tipo e origem, o formato do primeiro UUID e a diferença entre dois identificadores, além do horário ISO 8601 com fuso UTC. A entrega no Kafka e a atribuição observada de partition foram validadas manualmente conforme o procedimento acima.
+
+## Convenção de nomes de funções
+
+As funções criadas no projeto devem ter nomes em português, em `snake_case` e sem acentos, como `criar_evento` e `confirmar_entrega`. Funções de teste preservam o prefixo `test_`, seguido de um nome em português. Essa convenção também se aplica a novas funções e à revisão gradual do código existente.
+
+Nomes de funções e métodos das bibliotecas, campos do contrato de evento e chaves de configuração de APIs permanecem conforme suas definições originais.
+
 ## Próximas etapas
 
-1. Subir Kafka, PostgreSQL e ferramentas de observabilidade com Docker Compose.
-2. Criar o tópico de clickstream com seis partitions.
-3. Implementar o gerador de eventos e os dois consumer groups.
+1. Implementar o gerador configurável com os seis tipos de evento e testes.
+2. Implementar o consumo mínimo e os dois consumer groups.
+3. Medir throughput, consumer lag, latência e recursos locais.
 4. Executar e documentar experimentos de formação e recuperação de backlog.
 
 Consulte [o PRD](docs/prd.md), [a arquitetura](docs/architecture.md), [o contrato de eventos](docs/event-contract.md) e [o roadmap](docs/roadmap.md).
