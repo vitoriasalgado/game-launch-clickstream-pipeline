@@ -1,7 +1,7 @@
 import yaml
 
 
-def test_partitions():
+def test_particoes():
 
     with open("config/topics.yaml", "r", encoding="utf-8") as arquivo:
         conteudo = arquivo.read()
