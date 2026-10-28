@@ -55,3 +55,9 @@ def test_tipos_permitidos():
 def test_tipo_invalido():
     with pytest.raises(ValueError):
         criar_evento("tipo_inexistente")
+
+
+def test_usuario_sessao():
+    evento = criar_evento(usuario_id="usuario_teste", sessao_id="sessao_teste")
+    assert evento["user_id"] == "usuario_teste"
+    assert evento["session_id"] == "sessao_teste"
