@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from uuid import UUID
 
+import pytest
+
 from src.producer.publish_example import criar_evento
 
 
@@ -33,3 +35,23 @@ def test_horario_utc():
     horario = datetime.fromisoformat(evento["occurred_at"])
     assert horario.tzinfo is not None
     assert horario.utcoffset() == timedelta(0)
+
+
+def test_tipos_permitidos():
+
+    tipos = [
+        "trailer_play",
+        "game_page_view",
+        "wishlist_added",
+        "edition_compared",
+        "preorder_checkout_started",
+        "preorder_completed",
+    ]
+    for tipo in tipos:
+        evento = criar_evento(tipo)
+        assert evento["event_type"] == tipo
+
+
+def test_tipo_invalido():
+    with pytest.raises(ValueError):
+        criar_evento("tipo_inexistente")
