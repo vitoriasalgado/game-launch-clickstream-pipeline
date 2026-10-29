@@ -17,4 +17,10 @@ Com seis partitions nesse tópico, no máximo seis consumers do mesmo group pode
 
 PostgreSQL guarda agregados e resultados operacionais dos experimentos. Kafka UI, Prometheus, Grafana e cAdvisor serão usados para observar o estado do pipeline e dos containers.
 
+### Geração de carga e confirmação de entrega
+
+O gerador lê taxa alvo, duração, quantidade de sessões, pesos dos tipos e prazos de entrega de `config/load-profiles.yaml`. Usa um relógio monotônico para planejar os envios a partir do início da execução e tenta acompanhar a taxa alvo sem garanti-la. Publica com `session_id` como chave e mantém a idempotência do producer habilitada para preservar a ordenação em retentativas. Se a fila local do cliente encher, processa confirmações e aguarda espaço até o fim da janela. Essa fila pertence ao cliente Kafka e não substitui o broker como buffer do pipeline.
+
+As contagens distinguem eventos gerados, enfileirados, entregas confirmadas, falhas e pendências. O `flush` final tem prazo limitado; a taxa de entrega observada usa o total confirmado dividido pelo tempo de geração mais drenagem, enquanto a taxa de enfileiramento usa apenas a janela de geração. Não há `flush` nem log por evento. Os testes unitários simulam relógio e producer; as taxas efetivas do MacBook dependem de execução real documentada.
+
 MinIO e Parquet não integram o caminho crítico do MVP. Foram deliberadamente adiados para evitar que armazenamento de eventos brutos desvie o foco dos experimentos de Kafka, consumer lag e paralelismo.

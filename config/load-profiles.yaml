@@ -3,6 +3,8 @@ normal:
   target_events_per_second: 500
   duration_seconds: 10
   active_sessions: 100
+  delivery_timeout_ms: 10000
+  flush_timeout_seconds: 15
   event_type_weights:
     game_page_view: 50
     trailer_play: 25
@@ -14,6 +16,8 @@ campaign_trailer:
   target_events_per_second: 5000
   duration_seconds: 10
   active_sessions: 100
+  delivery_timeout_ms: 10000
+  flush_timeout_seconds: 15
   event_type_weights:
     game_page_view: 50
     trailer_play: 25
@@ -25,6 +29,8 @@ viral_peak:
   target_events_per_second: 20000
   duration_seconds: 10
   active_sessions: 100
+  delivery_timeout_ms: 10000
+  flush_timeout_seconds: 15
   event_type_weights:
     game_page_view: 50
     trailer_play: 25
