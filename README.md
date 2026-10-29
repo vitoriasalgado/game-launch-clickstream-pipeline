@@ -115,6 +115,49 @@ Na validação manual de 27/10/2026, foram observados dois eventos com UUIDs dif
 
 Essa observação confirma que, nessa execução, a mesma chave encaminhou os dois eventos à mesma partition, com offsets crescentes. Os números acima são evidência desse teste local, não valores que toda execução deva reproduzir. Outras sessões podem ir para outras partitions; a escolha também depende da regra de particionamento e da quantidade de partitions.
 
+## Executar o gerador de carga sintética
+
+Com o Kafka rodando, o tópico criado e o ambiente virtual ativo, execute na raiz do projeto. Defina o endereço do broker e escolha um dos perfis `normal`, `campaign_trailer` ou `viral_peak`:
+
+```bash
+export KAFKA_BOOTSTRAP_SERVERS=localhost:9092
+export LOAD_PROFILE=normal
+python -m src.producer.gerar_eventos
+```
+
+`LOAD_PROFILE` seleciona a configuração em `config/load-profiles.yaml`; se não for definido, o padrão é `normal`. Cada perfil configura:
+
+- `target_events_per_second`: taxa alvo de enfileiramento, não garantia de entrega.
+- `duration_seconds`: janela em que o programa tenta gerar e enfileirar eventos.
+- `active_sessions`: quantidade de sessões sintéticas reutilizadas durante a execução.
+- `event_type_weights`: pesos relativos para sortear os seis tipos. Eles não representam conversões reais nem garantem proporções exatas em cada sessão.
+- `delivery_timeout_ms`: prazo de entrega de uma mensagem, usado pelo cliente Kafka.
+- `flush_timeout_seconds`: espera máxima pela conclusão dos envios ao terminar a janela de geração.
+
+O gerador sorteia uma sessão e um tipo por evento, publica o JSON usando `session_id` como chave e processa as confirmações durante a execução. Se a fila local do cliente estiver cheia, espera espaço e tenta novamente o mesmo evento, respeitando a janela de geração. Não há impressão nem `flush` por mensagem: a drenagem ocorre uma vez ao final. A criação automática de tópicos está desabilitada, e a idempotência do producer está habilitada para preservar a ordenação nas retentativas do cliente. Isso não representa tolerância a falhas distribuída: o ambiente continua com um broker e fator de replicação 1.
+
+Ao terminar, o programa imprime um resumo JSON com contagens e tempos medidos:
+
+| Campo | Significado |
+| --- | --- |
+| `gerados` | Eventos construídos em memória. |
+| `enfileirados` | Eventos aceitos na fila local do producer; não são confirmações de entrega. |
+| `entregues` | Entregas confirmadas com sucesso pelo callback. |
+| `falhas_entrega` | Envios concluídos com erro no callback. |
+| `nao_enfileirados` | Eventos gerados que não entraram na fila antes do fim da janela. |
+| `pendentes` | Mensagens ainda pendentes quando a espera final terminou. |
+| `esperas_fila_cheia` | Tentativas adiadas por falta de espaço na fila local; não equivalem a consumer lag. |
+| `primeiro_erro` | Primeira falha de entrega reportada, quando houver. |
+| `tempo_geracao_s` | Duração observada da geração, incluindo controle de taxa e espera por espaço. |
+| `tempo_drenagem_s` | Tempo gasto aguardando os envios após encerrar a geração. |
+| `tempo_total_s` | Geração mais drenagem final. |
+| `taxa_enfileiramento_observada_eventos_s` | Enfileirados divididos pelo tempo de geração. |
+| `taxa_entrega_observada_eventos_s` | Entregues divididos pelo tempo total, incluindo a drenagem. |
+
+A taxa alvo é apresentada separadamente das taxas observadas. Falhas, pendências ou eventos não enfileirados resultam em código de saída 1; uma taxa observada abaixo da meta não é, por si só, erro de execução. O processo pode durar mais que `duration_seconds` devido à drenagem final. Atingir 500, 5.000 ou 20.000 eventos/s deve ser verificado no MacBook e registrado com o resumo da execução; testes unitários não comprovam essas taxas reais.
+
+O sorteio modela intensidade e mistura de eventos, não um funil de navegação causal: ele não exige que uma sessão passe por checkout antes de um evento de conclusão. Essa é uma simplificação explícita do experimento sintético de capacidade.
+
 ## Verificações locais
 
 Com o ambiente virtual ativo, os comandos abaixo verificam problemas no código, conferem a formatação e executam os testes, respectivamente:
@@ -125,7 +168,7 @@ python -m ruff format --check src tests
 python -m pytest tests -v
 ```
 
-Os testes automatizados atuais verificam a configuração de partitions e os campos do evento de exemplo, seu tipo e origem, o formato do primeiro UUID e a diferença entre dois identificadores, além do horário ISO 8601 com fuso UTC. A entrega no Kafka e a atribuição observada de partition foram validadas manualmente conforme o procedimento acima.
+Os testes automatizados verificam a configuração de partitions, o contrato do evento, os seis tipos permitidos, usuário e sessão, o formato do primeiro UUID e a diferença entre identificadores, além do horário ISO 8601 em UTC. Para o gerador de carga, um relógio e um producer simulados verificam controle de taxa, chave igual ao `session_id` do JSON, contagem de confirmações e falhas, fila cheia, drenagem limitada e cálculos de throughput. Esses testes não acessam um broker. A entrega do evento de exemplo e sua partition foram validadas manualmente conforme o procedimento acima; a carga real do gerador precisa de sua própria execução e registro.
 
 ## Convenção de nomes de funções
 
@@ -135,7 +178,7 @@ Nomes de funções e métodos das bibliotecas, campos do contrato de evento e ch
 
 ## Próximas etapas
 
-1. Implementar o gerador configurável com os seis tipos de evento e testes.
+1. Executar os perfis do gerador no ambiente local e registrar taxas efetivas e limitações.
 2. Implementar o consumo mínimo e os dois consumer groups.
 3. Medir throughput, consumer lag, latência e recursos locais.
 4. Executar e documentar experimentos de formação e recuperação de backlog.
