@@ -183,7 +183,7 @@ Para CI, faça o commit após as verificações locais e confirme o resultado no
 **Critérios de aceite:**
 
 - Há ao menos uma execução abaixo, igual e acima do número de partitions.
-- A comparação demonstra ganho até o limite das seis partitions.
+- A comparação apresenta o throughput e o tempo de recuperação do backlog nas condições com menos, igual e mais consumers que as seis partitions. As conclusões se baseiam nos resultados observados e discutem os possíveis gargalos e as limitações do ambiente local, sem pressupor ganho proporcional.
 - Consumers excedentes ficam ociosos ou não elevam o throughput do group.
 - O tempo de recuperação do backlog é comparado entre as execuções.
 
