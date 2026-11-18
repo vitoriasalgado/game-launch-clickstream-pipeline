@@ -115,6 +115,26 @@ Na validação manual de 27/10/2026, foram observados dois eventos com UUIDs dif
 
 Essa observação confirma que, nessa execução, a mesma chave encaminhou os dois eventos à mesma partition, com offsets crescentes. Os números acima são evidência desse teste local, não valores que toda execução deva reproduzir. Outras sessões podem ir para outras partitions; a escolha também depende da regra de particionamento e da quantidade de partitions.
 
+## Executar o consumer mínimo
+
+Com o Kafka rodando, o tópico criado e as dependências instaladas em `.venv`, execute na raiz do projeto. Defina o endereço do broker na sessão do terminal:
+
+```bash
+export KAFKA_BOOTSTRAP_SERVERS=localhost:9092
+```
+
+Inicie o consumer para ler o tópico definido em `config/topics.yaml`:
+
+```bash
+.venv/bin/python -m src.consumers.consumir_eventos
+```
+
+O group `minimal-consumer` imprime partition, offset e conteúdo de cada mensagem e depois confirma o offset de forma síncrona. O commit registra a próxima posição de leitura daquela partition. O programa continua esperando quando não recebe mensagens; encerre com Ctrl+C, que mostra `Consumo interrompido.` e fecha o consumer.
+
+Ao reiniciar o mesmo group, a leitura retoma dos offsets confirmados. Sem um offset válido, `auto.offset.reset=earliest` permite começar pelas mensagens mais antigas ainda disponíveis. Uma interrupção após imprimir e antes de confirmar pode causar releitura. A impressão é o processamento observável deste marco; não há gravação no PostgreSQL.
+
+O procedimento de pausa, publicação e retomada, com offsets e lag observados, está em [Validação do consumer mínimo](docs/experiments/validacao-consumer-minimo.md). Um group recém-iniciado pode não ter offsets confirmados; o lag zero da interface, sozinho, não comprova que não há mensagens aguardando.
+
 ## Executar o gerador de carga sintética
 
 Com o Kafka rodando, o tópico criado e o ambiente virtual ativo, execute na raiz do projeto. Defina o endereço do broker e escolha um dos perfis `normal`, `campaign_trailer` ou `viral_peak`:
@@ -170,6 +190,8 @@ python -m pytest tests -v
 
 Os testes automatizados verificam a configuração de partitions, o contrato do evento, os seis tipos permitidos, usuário e sessão, o formato do primeiro UUID e a diferença entre identificadores, além do horário ISO 8601 em UTC. Para o gerador de carga, um relógio e um producer simulados verificam controle de taxa, chave igual ao `session_id` do JSON, contagem de confirmações e falhas, fila cheia, drenagem limitada e cálculos de throughput. Esses testes não acessam um broker. A entrega do evento de exemplo e sua partition foram validadas manualmente conforme o procedimento acima; a carga real do gerador precisa de sua própria execução e registro.
 
+Os testes do consumer usam um cliente Kafka simulado para verificar processamento antes do commit, ausência de confirmação quando o processamento falha ou a mensagem contém erro e fechamento na interrupção ou em falhas. Eles não comprovam recuperação de offsets ou lag no broker real; a validação manual está no documento do consumer mínimo acima.
+
 ## Convenção de nomes de funções
 
 As funções criadas no projeto devem ter nomes em português, em `snake_case` e sem acentos, como `criar_evento` e `confirmar_entrega`. Funções de teste preservam o prefixo `test_`, seguido de um nome em português. Essa convenção também se aplica a novas funções e à revisão gradual do código existente.
@@ -179,7 +201,7 @@ Nomes de funções e métodos das bibliotecas, campos do contrato de evento e ch
 ## Próximas etapas
 
 1. Executar os perfis do gerador no ambiente local e registrar taxas efetivas e limitações.
-2. Implementar o consumo mínimo e os dois consumer groups.
+2. Concluir as verificações do consumo mínimo e implementar os groups `campaign-metrics` e `active-users`.
 3. Medir throughput, consumer lag, latência e recursos locais.
 4. Executar e documentar experimentos de formação e recuperação de backlog.
 
